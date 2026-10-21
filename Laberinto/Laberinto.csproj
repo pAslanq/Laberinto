@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{788B2F87-C192-4BFC-B4CA-4D5097A6E7C9}</ProjectGuid>
+    <ProjectGuid>{826ACF3B-15C5-A9CD-6204-5640701DDDEF}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>Laberinto</RootNamespace>
     <AssemblyName>Laberinto</AssemblyName>
@@ -54,6 +54,9 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Form1.resx">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

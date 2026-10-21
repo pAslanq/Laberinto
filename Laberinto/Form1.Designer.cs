@@ -47,7 +47,7 @@
             this.ClientSize = new System.Drawing.Size(971, 614);
             this.Controls.Add(this.button1);
             this.Name = "Form1";
-            this.Text = " ";
+            this.Text = "s";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.ResumeLayout(false);
 
