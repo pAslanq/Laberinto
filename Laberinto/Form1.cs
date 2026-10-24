@@ -25,7 +25,11 @@ namespace Laberinto
 
         private void Form1_Load(object sender, EventArgs e)
         {
-
+            if (panel1 != null)
+            {
+                panel1.Left = (this.ClientSize.Width - panel1.Width) / 2;
+                panel1.Top = (this.ClientSize.Height - panel1.Height) / 2;
+            }
         }
 
         private void Form1_Resize(object sender, EventArgs e)
