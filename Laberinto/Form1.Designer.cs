@@ -86,6 +86,7 @@
             this.btnSalir.TabIndex = 4;
             this.btnSalir.Text = "Salir";
             this.btnSalir.UseVisualStyleBackColor = false;
+            this.btnSalir.Click += new System.EventHandler(this.btnSalir_Click);
             this.btnSalir.MouseEnter += new System.EventHandler(this.Form1_MouseEnter);
             this.btnSalir.MouseLeave += new System.EventHandler(this.Form1_MouseLeave);
             // 
@@ -104,6 +105,7 @@
             this.btnJugadorVsJugador.TabIndex = 3;
             this.btnJugadorVsJugador.Text = "Jugador VS Jugador";
             this.btnJugadorVsJugador.UseVisualStyleBackColor = false;
+            this.btnJugadorVsJugador.Click += new System.EventHandler(this.btnJugadorVsJugador_Click);
             this.btnJugadorVsJugador.MouseEnter += new System.EventHandler(this.Form1_MouseEnter);
             this.btnJugadorVsJugador.MouseLeave += new System.EventHandler(this.Form1_MouseLeave);
             // 
@@ -122,6 +124,7 @@
             this.btnBotVsJugador.TabIndex = 2;
             this.btnBotVsJugador.Text = "Bot VS Jugador";
             this.btnBotVsJugador.UseVisualStyleBackColor = false;
+            this.btnBotVsJugador.Click += new System.EventHandler(this.btnBotVsJugador_Click);
             this.btnBotVsJugador.MouseEnter += new System.EventHandler(this.Form1_MouseEnter);
             this.btnBotVsJugador.MouseLeave += new System.EventHandler(this.Form1_MouseLeave);
             // 

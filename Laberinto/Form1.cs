@@ -10,6 +10,12 @@ using System.Windows.Forms;
 
 namespace Laberinto
 {
+    public enum ModoJuego
+    {
+        BotVsBot,
+        BotVsJugador,
+        JugadorVsJugador
+    }
     public partial class Form1 : Form
     {
         public Form1()
@@ -33,7 +39,14 @@ namespace Laberinto
 
         private void button1_Click(object sender, EventArgs e)
         {
+            Modo(ModoJuego.BotVsBot);
+        }
 
+        private void Modo(ModoJuego modo)
+        {
+            FormJuego form2 = new FormJuego(modo);
+            form2.Show();
+            this.Hide();
         }
 
         private void Form1_MouseEnter(object sender, EventArgs e)
@@ -56,6 +69,21 @@ namespace Laberinto
                 btn.BackColor = Color.FromArgb(30, 41, 59);
                 btn.ForeColor = colorAcento;
             }   
+        }
+
+        private void btnBotVsJugador_Click(object sender, EventArgs e)
+        {
+            Modo(ModoJuego.BotVsJugador);
+        }
+
+        private void btnJugadorVsJugador_Click(object sender, EventArgs e)
+        {
+            Modo(ModoJuego.JugadorVsJugador);
+        }
+
+        private void btnSalir_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
         }
     }
 }
