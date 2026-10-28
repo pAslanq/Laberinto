@@ -28,7 +28,7 @@ namespace Laberinto
             matriz = new int[FILAS, COLUMNAS];
             Salidas.Clear();
 
-            // 1. Llenar toda la matriz de muros
+            // Llenar la matriz de muros
             for (int r = 0; r < FILAS; r++)
             {
                 for (int c = 0; c < COLUMNAS; c++)
@@ -37,7 +37,7 @@ namespace Laberinto
                 }
             }
 
-            // 2. DFS con Backtracking usando una Pila
+            // DFS con Backtracking usando una Pila
             Stack<Point> pila = new Stack<Point>();
             Point celdaInicial = new Point(1, 1);
             matriz[celdaInicial.Y, celdaInicial.X] = CAMINO;
@@ -75,7 +75,7 @@ namespace Laberinto
                     // Elegir vecino al azar
                     Point elegido = vecinos[rnd.Next(vecinos.Count)];
 
-                    // Derribar muro intermedio
+                    // Quitar muro intermedio
                     int muroY = actual.Y + (elegido.Y - actual.Y) / 2;
                     int muroX = actual.X + (elegido.X - actual.X) / 2;
                     matriz[muroY, muroX] = CAMINO;
@@ -90,18 +90,17 @@ namespace Laberinto
                 }
             }
 
-            // 3. Establecer Inicio
+            // Inicio
             PosInicio = new Point(1, 1);
             matriz[PosInicio.Y, PosInicio.X] = INICIO;
 
-            // 4. Establecer máximo 2 salidas
-            // Salida 1: Esquina inferior derecha
+            // Salida 1
             Point salida1 = new Point(COLUMNAS - 2, FILAS - 1);
             matriz[FILAS - 2, COLUMNAS - 2] = CAMINO;
             matriz[salida1.Y, salida1.X] = SALIDA;
             Salidas.Add(salida1);
 
-            // Salida 2: Esquina superior derecha
+            // Salida 2
             Point salida2 = new Point(COLUMNAS - 2, 0);
             matriz[1, COLUMNAS - 2] = CAMINO;
             matriz[salida2.Y, salida2.X] = SALIDA;
@@ -110,17 +109,17 @@ namespace Laberinto
             return matriz;
         }
 
-        // Renderizado eficiente en un Bitmap
+        // Renderizado en un Bitmap
         public Bitmap DibujarLaberinto(int tamanoCelda)
         {
             Bitmap bmp = new Bitmap(COLUMNAS * tamanoCelda, FILAS * tamanoCelda);
 
             using (Graphics g = Graphics.FromImage(bmp))
             {
-                using (Brush brushPared = new SolidBrush(Color.FromArgb(30, 30, 30)))
-                using (Brush brushCamino = new SolidBrush(Color.White))
-                using (Brush brushInicio = new SolidBrush(Color.LimeGreen))
-                using (Brush brushSalida = new SolidBrush(Color.Red))
+                using (Brush Pared = new SolidBrush(Color.FromArgb(30, 30, 30)))
+                using (Brush Camino = new SolidBrush(Color.White))
+                using (Brush Inicio = new SolidBrush(Color.LimeGreen))
+                using (Brush Salida = new SolidBrush(Color.Red))
                 {
                     for (int r = 0; r < FILAS; r++)
                     {
@@ -129,10 +128,10 @@ namespace Laberinto
                             Brush b;
                             switch (matriz[r, c])
                             {
-                                case PARED: b = brushPared; break;
-                                case INICIO: b = brushInicio; break;
-                                case SALIDA: b = brushSalida; break;
-                                default: b = brushCamino; break;
+                                case PARED: b = Pared; break;
+                                case INICIO: b = Inicio; break;
+                                case SALIDA: b = Salida; break;
+                                default: b = Camino; break;
                             }
 
                             g.FillRectangle(b, c * tamanoCelda, r * tamanoCelda, tamanoCelda, tamanoCelda);
