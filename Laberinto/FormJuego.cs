@@ -50,13 +50,21 @@ namespace Laberinto
             generador = new GeneradorLaberinto();
             laberintoMatriz = generador.GenerarLaberinto();
 
-            // Dibujar laberinto principal 10 píxeles por celda
             if (pbLaberinto.Image != null) pbLaberinto.Image.Dispose();
             pbLaberinto.Image = generador.DibujarLaberinto(10);
 
-            // Dibujar minimapa 3 píxeles por celda
             if (pbMinimapa.Image != null) pbMinimapa.Image.Dispose();
             pbMinimapa.Image = generador.DibujarLaberinto(3);
+
+            // Colocar bots al inicio
+            posBotAStar = generador.PosInicio;
+            posBotDFS = generador.PosInicio;
+
+            indiceBotAStar = 0;
+            indiceBotDFS = 0;
+
+            pbLaberinto.Invalidate();
+            pbMinimapa.Invalidate();
         }
 
         private void btnSalir_Click(object sender, EventArgs e)
@@ -70,9 +78,24 @@ namespace Laberinto
         {
             if (carreraEnCurso) return;
 
+            lblEstado.Text = "Calculando rutas con A* y DFS...";
+            rutaBotAStar = BuscadorRutas.ResolverAEstrella(laberintoMatriz, generador.PosInicio, generador.Salidas);
+            rutaBotDFS = BuscadorRutas.ResolverDFS(laberintoMatriz, generador.PosInicio, generador.Salidas);
+
+            // Validar que ambos algoritmos encontraron camino
+            if (rutaBotAStar.Count == 0 || rutaBotDFS.Count == 0)
+            {
+                MessageBox.Show("No se encontró una ruta válida para la salida.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Reiniciar índices y arrancar
+            indiceBotAStar = 0;
+            indiceBotDFS = 0;
             carreraEnCurso = true;
             btnIniciar.Enabled = false;
-            lblEstado.Text = "Carrera en curso: Bot Cian (A*) vs Bot Dorado (DFS)...";
+
+            lblEstado.Text = $"Bot A*: {rutaBotAStar.Count} pasos | Bot DFS: {rutaBotDFS.Count} pasos";
             tmrMovimiento.Start();
         }
 
