@@ -58,6 +58,11 @@
     <Compile Include="FormJuego.Designer.cs">
       <DependentUpon>FormJuego.cs</DependentUpon>
     </Compile>
+    <Compile Include="Algoritmos.cs" />
+    <Compile Include="Bot.cs" />
+    <Compile Include="ColaPrioridad.cs" />
+    <Compile Include="Jugador.cs" />
+    <Compile Include="Mapa.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Form1.resx">
