@@ -102,5 +102,77 @@ namespace Laberinto
             }
             return min;
         }
+
+        // DFS 
+        public static List<Point> ResolverDFS(int[,] matriz, Point inicio, List<Point> salidas)
+        {
+            int filas = matriz.GetLength(0);
+            int columnas = matriz.GetLength(1);
+
+            Stack<Point> pila = new Stack<Point>();
+            HashSet<Point> visitados = new HashSet<Point>();
+            Dictionary<Point, Point> mapaPadres = new Dictionary<Point, Point>();
+
+            pila.Push(inicio);
+            visitados.Add(inicio);
+
+            Point salidaAlcanzada = Point.Empty;
+            bool encontrado = false;
+
+            while (pila.Count > 0 && !encontrado)
+            {
+                Point actual = pila.Pop();
+
+                if (salidas.Contains(actual))
+                {
+                    salidaAlcanzada = actual;
+                    encontrado = true;
+                    break;
+                }
+
+                foreach (var dir in Direcciones)
+                {
+                    Point vecino = new Point(actual.X + dir.X, actual.Y + dir.Y);
+
+                    if (vecino.X >= 0 && vecino.X < columnas && vecino.Y >= 0 && vecino.Y < filas)
+                    {
+                        if (matriz[vecino.Y, vecino.X] != GeneradorLaberinto.PARED && !visitados.Contains(vecino))
+                        {
+                            visitados.Add(vecino);
+                            mapaPadres[vecino] = actual;
+                            pila.Push(vecino);
+                        }
+                    }
+                }
+            }
+
+            // Reconstruir la ruta DFS
+            List<Point> ruta = new List<Point>();
+            if (encontrado)
+            {
+                Point cur = salidaAlcanzada;
+                while (cur != inicio)
+                {
+                    ruta.Add(cur);
+                    cur = mapaPadres[cur];
+                }
+                ruta.Add(inicio);
+                ruta.Reverse();
+            }
+
+            return ruta;
+        }
+
+        private static List<Point> ReconstruirRuta(NodoAEstrella nodo)
+        {
+            List<Point> camino = new List<Point>();
+            while (nodo != null)
+            {
+                camino.Add(nodo.Posicion);
+                nodo = nodo.Padre;
+            }
+            camino.Reverse();
+            return camino;
+        }
     }
 }
