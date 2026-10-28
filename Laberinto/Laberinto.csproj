@@ -58,6 +58,7 @@
     <Compile Include="FormJuego.Designer.cs">
       <DependentUpon>FormJuego.cs</DependentUpon>
     </Compile>
+    <Compile Include="GeneradorLaberinto.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Form1.resx">
