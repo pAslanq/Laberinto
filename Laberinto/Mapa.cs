@@ -135,6 +135,23 @@ namespace Laberinto
                 visitada[siguiente.X, siguiente.Y] = true;
                 pila.Push(siguiente);
             }
+
+            // Abre algunos atajos/caminos alternos para que el laberinto tenga múltiples rutas.
+            // Así A* elige el camino más óptimo y DFS toma rutas distintas.
+            int paredesExtra = (Tamano * Tamano) / 10;
+            for (int i = 0; i < paredesExtra; i++)
+            {
+                int rx = rng.Next(0, Tamano);
+                int ry = rng.Next(0, Tamano);
+                Point celda = new Point(rx, ry);
+                Direccion dir = Direcciones[rng.Next(Direcciones.Length)];
+                Point vecino = Desplazar(celda, dir);
+
+                if (EnRango(vecino))
+                {
+                    QuitarPared(celda, dir);
+                }
+            }
         }
 
         private void QuitarPared(Point celda, Direccion direccion)

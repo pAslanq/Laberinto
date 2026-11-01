@@ -22,7 +22,7 @@ namespace Laberinto
         private const int VelocidadBotMs = 30;
         private const int VariacionBotMs = 10;
         private const double ZoomMinimo = 0.5;
-        private const double ZoomMaximo = 4.0;
+        private const double ZoomMaximo = 5.0;
         private const double PasoZoom = 0.25;
 
         private readonly Form1 menu;
@@ -33,7 +33,7 @@ namespace Laberinto
         private Mapa mapa;
         private Point origen;
         private int celda;
-        private double zoom = 1.0;
+        private double zoom = 2.5;
         private bool terminada;
 
         public FormJuego(ModoJuego modo, Dificultad dificultad, Form1 menu)
@@ -163,13 +163,13 @@ namespace Laberinto
             switch (ModoActual)
             {
                 case ModoJuego.BotVsBot:
+                    bots.Add(new Bot("Bot DFS", Rojo, new DFS(), mapa));
                     bots.Add(new Bot("Bot A*", Amarillo, new AStar(), mapa));
-                    bots.Add(new Bot("Bot Dijkstra", Rojo, new Dijkstra(), mapa));
                     break;
 
                 case ModoJuego.BotVsJugador:
                     jugadores.Add(new Jugador("Jugador", Cian, CrearControles(true, true), mapa.Inicio));
-                    bots.Add(new Bot("Bot A*", Amarillo, new AStar(), mapa));
+                    bots.Add(new Bot("Bot DFS", Rojo, new DFS(), mapa));
                     break;
 
                 case ModoJuego.JugadorVsJugador:
@@ -337,6 +337,17 @@ namespace Laberinto
 
         private PointF CentroPiezas()
         {
+            if (ModoActual == ModoJuego.BotVsJugador && jugadores.Count > 0)
+            {
+                return new PointF(jugadores[0].Posicion.X, jugadores[0].Posicion.Y);
+            }
+
+            if (ModoActual == ModoJuego.BotVsBot && bots.Count > 0)
+            {
+                Bot lider = bots.OrderByDescending(b => b.PasosRecorridos).First();
+                return new PointF(lider.Posicion.X, lider.Posicion.Y);
+            }
+
             List<Point> posiciones = jugadores.Select(j => j.Posicion).Concat(bots.Select(b => b.Posicion)).ToList();
             if (posiciones.Count == 0)
             {
@@ -410,6 +421,117 @@ namespace Laberinto
             }
 
             g.ResetClip();
+
+            DibujarMinimapa(g);
+        }
+
+        private void DibujarMinimapa(Graphics g)
+        {
+            // Minimapa amplio tipo HUD superpuesto en la esquina superior derecha
+            const int miniTamano = 220;
+            const int margen = 20;
+
+            int miniX = ClientSize.Width - miniTamano - margen;
+            int miniY = btnRegresar.Bottom + 12;
+            Rectangle miniRect = new Rectangle(miniX, miniY, miniTamano, miniTamano);
+
+            using (SolidBrush brochaFondo = new SolidBrush(Color.FromArgb(230, 15, 23, 42)))
+            using (Pen plumaBorde = new Pen(Color.FromArgb(56, 189, 248), 2))
+            {
+                g.FillRectangle(brochaFondo, miniRect);
+                g.DrawRectangle(plumaBorde, miniRect);
+            }
+
+            float miniCelda = (float)miniTamano / Tamano;
+
+            // Salida / Meta en verde
+            float metaX = miniX + mapa.Meta.X * miniCelda;
+            float metaY = miniY + mapa.Meta.Y * miniCelda;
+            using (SolidBrush brochaMeta = new SolidBrush(Verde))
+            {
+                g.FillRectangle(brochaMeta, metaX, metaY, Math.Max(2f, miniCelda), Math.Max(2f, miniCelda));
+            }
+
+            // Inicio en gris/cian tenue
+            float inicioX = miniX + mapa.Inicio.X * miniCelda;
+            float inicioY = miniY + mapa.Inicio.Y * miniCelda;
+            using (SolidBrush brochaInicio = new SolidBrush(Color.FromArgb(120, Cian)))
+            {
+                g.FillRectangle(brochaInicio, inicioX, inicioY, Math.Max(2f, miniCelda), Math.Max(2f, miniCelda));
+            }
+
+            // Dibujar paredes a escala miniatura si el tamaño lo permite
+            using (Pen plumaParedMini = new Pen(Color.FromArgb(90, 71, 85, 105), 1))
+            {
+                for (int x = 0; x < Tamano; x++)
+                {
+                    for (int y = 0; y < Tamano; y++)
+                    {
+                        Point p = new Point(x, y);
+                        Direccion dir = mapa.ParedesDe(p);
+                        float px = miniX + x * miniCelda;
+                        float py = miniY + y * miniCelda;
+
+                        if ((dir & Direccion.Derecha) != Direccion.Ninguna)
+                        {
+                            g.DrawLine(plumaParedMini, px + miniCelda, py, px + miniCelda, py + miniCelda);
+                        }
+                        if ((dir & Direccion.Abajo) != Direccion.Ninguna)
+                        {
+                            g.DrawLine(plumaParedMini, px, py + miniCelda, px + miniCelda, py + miniCelda);
+                        }
+                    }
+                }
+            }
+
+            // Recuadro del viewport / cámara actual
+            Rectangle vista = Vista();
+            float vpX = miniX + (float)(vista.Left - origen.X) / (celda * Tamano) * miniTamano;
+            float vpY = miniY + (float)(vista.Top - origen.Y) / (celda * Tamano) * miniTamano;
+            float vpW = (float)vista.Width / (celda * Tamano) * miniTamano;
+            float vpH = (float)vista.Height / (celda * Tamano) * miniTamano;
+
+            RectangleF rectCamara = new RectangleF(vpX, vpY, vpW, vpH);
+            // Intersecar para que el viewport no se salga del borde del minimapa
+            rectCamara.Intersect(miniRect);
+
+            using (SolidBrush brochaVp = new SolidBrush(Color.FromArgb(40, 255, 255, 255)))
+            using (Pen plumaVp = new Pen(Color.FromArgb(180, 255, 255, 255), 1))
+            {
+                g.FillRectangle(brochaVp, rectCamara);
+                g.DrawRectangle(plumaVp, rectCamara.X, rectCamara.Y, rectCamara.Width, rectCamara.Height);
+            }
+
+            // Agentes / Bots en minimapa
+            foreach (Bot bot in bots)
+            {
+                float bx = miniX + bot.Posicion.X * miniCelda;
+                float by = miniY + bot.Posicion.Y * miniCelda;
+                float tamPunto = Math.Max(4f, miniCelda * 1.5f);
+                using (SolidBrush brocha = new SolidBrush(bot.Color))
+                {
+                    g.FillEllipse(brocha, bx - tamPunto / 2f + miniCelda / 2f, by - tamPunto / 2f + miniCelda / 2f, tamPunto, tamPunto);
+                }
+            }
+
+            // Jugadores en minimapa
+            foreach (Jugador jugador in jugadores)
+            {
+                float jx = miniX + jugador.Posicion.X * miniCelda;
+                float jy = miniY + jugador.Posicion.Y * miniCelda;
+                float tamPunto = Math.Max(4f, miniCelda * 1.5f);
+                using (SolidBrush brocha = new SolidBrush(jugador.Color))
+                {
+                    g.FillEllipse(brocha, jx - tamPunto / 2f + miniCelda / 2f, jy - tamPunto / 2f + miniCelda / 2f, tamPunto, tamPunto);
+                }
+            }
+
+            // Etiqueta sutil "MINIMAPA"
+            using (Font fuenteMini = new Font("Segoe UI", 7.5f, FontStyle.Bold))
+            using (SolidBrush brochaTexto = new SolidBrush(Color.FromArgb(148, 163, 184)))
+            {
+                g.DrawString("MINIMAPA", fuenteMini, brochaTexto, miniX + 4, miniY + 3);
+            }
         }
 
         private void DibujarParedes(Graphics g)

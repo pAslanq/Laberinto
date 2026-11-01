@@ -44,6 +44,11 @@ namespace Laberinto
 
         public Point Posicion { get; private set; }
 
+        public int PasosRecorridos
+        {
+            get { return indice; }
+        }
+
         public List<Point> Recorrido { get; private set; }
 
         public void Avanzar()

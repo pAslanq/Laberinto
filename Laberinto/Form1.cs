@@ -20,9 +20,9 @@ namespace Laberinto
     // El valor de cada dificultad es el tamaño del laberinto (tamaño x tamaño).
     public enum Dificultad
     {
-        Facil = 50,
-        Medio = 70,
-        Dificil = 100
+        Facil = 20,
+        Medio = 30,
+        Dificil = 45
     }
 
     public partial class Form1 : Form

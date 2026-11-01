@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 
@@ -12,12 +12,12 @@ namespace Laberinto
     {
         public abstract string Nombre { get; }
 
-        public int NodosExplorados { get; private set; }
+        public int NodosExplorados { get; protected set; }
 
         protected abstract int Heuristica(Point celda, Point meta);
 
         // Devuelve la ruta de inicio a meta (ambos incluidos), o una lista vacía si no existe.
-        public List<Point> Resolver(Mapa mapa, Point inicio, Point meta)
+        public virtual List<Point> Resolver(Mapa mapa, Point inicio, Point meta)
         {
             int n = mapa.Tamano;
             int[,] costo = new int[n, n];
@@ -80,7 +80,7 @@ namespace Laberinto
             return new List<Point>();
         }
 
-        private static List<Point> Reconstruir(Point[,] anterior, Point inicio, Point meta)
+        protected static List<Point> Reconstruir(Point[,] anterior, Point inicio, Point meta)
         {
             List<Point> ruta = new List<Point> { meta };
             Point actual = meta;
@@ -93,6 +93,61 @@ namespace Laberinto
 
             ruta.Reverse();
             return ruta;
+        }
+    }
+
+    public class DFS : Busqueda
+    {
+        public override string Nombre
+        {
+            get { return "DFS"; }
+        }
+
+        protected override int Heuristica(Point celda, Point meta)
+        {
+            return 0;
+        }
+
+        public override List<Point> Resolver(Mapa mapa, Point inicio, Point meta)
+        {
+            int n = mapa.Tamano;
+            Point[,] anterior = new Point[n, n];
+            bool[,] visitada = new bool[n, n];
+
+            NodosExplorados = 0;
+            Stack<Point> pila = new Stack<Point>();
+
+            pila.Push(inicio);
+            visitada[inicio.X, inicio.Y] = true;
+
+            while (pila.Count > 0)
+            {
+                Point actual = pila.Pop();
+                NodosExplorados++;
+
+                if (actual == meta)
+                {
+                    return Reconstruir(anterior, inicio, meta);
+                }
+
+                foreach (Direccion direccion in Mapa.Direcciones)
+                {
+                    if (!mapa.PuedeMover(actual, direccion))
+                    {
+                        continue;
+                    }
+
+                    Point vecino = mapa.Desplazar(actual, direccion);
+                    if (!visitada[vecino.X, vecino.Y])
+                    {
+                        visitada[vecino.X, vecino.Y] = true;
+                        anterior[vecino.X, vecino.Y] = actual;
+                        pila.Push(vecino);
+                    }
+                }
+            }
+
+            return new List<Point>();
         }
     }
 
