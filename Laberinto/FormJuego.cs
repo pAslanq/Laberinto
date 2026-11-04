@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
@@ -19,8 +20,8 @@ namespace Laberinto
 
         private const int InicioTablero = 120;
         private const int MargenTablero = 24;
-        private const int VelocidadBotMs = 30;
-        private const int VariacionBotMs = 10;
+        private const int VelocidadBotMs = 2;
+        private const int VariacionBotMs = 1;
         private const double ZoomMinimo = 0.5;
         private const double ZoomMaximo = 5.0;
         private const double PasoZoom = 0.25;
@@ -28,6 +29,9 @@ namespace Laberinto
         private readonly Form1 menu;
         private readonly Random rng = new Random();
         private readonly List<Timer> temporizadores = new List<Timer>();
+        private readonly Dictionary<Bot, Stopwatch> cronometros = new Dictionary<Bot, Stopwatch>();
+        private readonly List<Bot> botsEnMeta = new List<Bot>();   // en orden de llegada
+        private readonly Timer relojPantalla = new Timer();
         private List<Jugador> jugadores = new List<Jugador>();
         private List<Bot> bots = new List<Bot>();
         private Mapa mapa;
@@ -44,6 +48,18 @@ namespace Laberinto
             ModoActual = modo;
             DificultadActual = dificultad;
             Text = "Laberinto Inteligente - " + TextoModo(modo);
+
+            // Repinta con frecuencia para que los cronómetros se actualicen
+            // aunque uno de los bots ya haya llegado a la meta.
+            relojPantalla.Interval = 50;
+            relojPantalla.Tick += (s, e) =>
+            {
+                if (!terminada && bots.Count > 0)
+                {
+                    Invalidate();
+                }
+            };
+            relojPantalla.Start();
 
             IniciarPartida();
         }
@@ -105,6 +121,8 @@ namespace Laberinto
 
         private void FormJuego_FormClosed(object sender, FormClosedEventArgs e)
         {
+            relojPantalla.Stop();
+            relojPantalla.Dispose();
             DetenerTemporizadores();
         }
 
@@ -159,6 +177,8 @@ namespace Laberinto
             mapa = new Mapa(Tamano, rng);
             jugadores = new List<Jugador>();
             bots = new List<Bot>();
+            cronometros.Clear();
+            botsEnMeta.Clear();
 
             switch (ModoActual)
             {
@@ -193,6 +213,9 @@ namespace Laberinto
 
         private void IniciarBot(Bot bot)
         {
+            // Cada bot tiene su propio cronómetro, que arranca junto con él.
+            cronometros[bot] = Stopwatch.StartNew();
+
             Timer temporizador = new Timer();
             temporizador.Interval = IntervaloBot();
             temporizador.Tick += (s, e) => MoverBot(bot, temporizador);
@@ -202,7 +225,7 @@ namespace Laberinto
 
         private void MoverBot(Bot bot, Timer temporizador)
         {
-            if (terminada)
+            if (terminada || botsEnMeta.Contains(bot))
             {
                 return;
             }
@@ -211,7 +234,27 @@ namespace Laberinto
             temporizador.Interval = IntervaloBot();
             Invalidate();
 
-            if (bot.HaLlegado(mapa))
+            if (!bot.HaLlegado(mapa))
+            {
+                return;
+            }
+
+            // Este bot ya llegó: congela su tiempo y deja de moverlo.
+            cronometros[bot].Stop();
+            botsEnMeta.Add(bot);
+            temporizador.Stop();
+
+            if (ModoActual == ModoJuego.BotVsBot)
+            {
+                // La partida termina solo cuando todos los bots cruzaron la meta.
+                // El ganador es el primero en haber llegado.
+                if (botsEnMeta.Count == bots.Count)
+                {
+                    Bot primero = botsEnMeta[0];
+                    Terminar(primero.Nombre, primero.Color);
+                }
+            }
+            else
             {
                 Terminar(bot.Nombre, bot.Color);
             }
@@ -250,6 +293,12 @@ namespace Laberinto
         {
             terminada = true;
             DetenerTemporizadores();
+
+            // Congela los cronómetros que sigan corriendo (por ejemplo, si gana el jugador).
+            foreach (Stopwatch cronometro in cronometros.Values)
+            {
+                cronometro.Stop();
+            }
 
             lblGanador.Text = "¡GANA " + ganador.ToUpper() + "!";
             lblGanador.ForeColor = color;
@@ -344,7 +393,15 @@ namespace Laberinto
 
             if (ModoActual == ModoJuego.BotVsBot && bots.Count > 0)
             {
-                Bot lider = bots.OrderByDescending(b => b.PasosRecorridos).First();
+                // La cámara sigue al líder entre los bots que aún no llegaron,
+                // para no perder de vista al que sigue corriendo.
+                List<Bot> activos = bots.Where(b => !botsEnMeta.Contains(b)).ToList();
+                if (activos.Count == 0)
+                {
+                    activos = bots;
+                }
+
+                Bot lider = activos.OrderByDescending(b => b.PasosRecorridos).First();
                 return new PointF(lider.Posicion.X, lider.Posicion.Y);
             }
 
@@ -423,12 +480,54 @@ namespace Laberinto
             g.ResetClip();
 
             DibujarMinimapa(g);
+            DibujarTemporizadores(g);
+        }
+
+        private static string FormatoTiempo(TimeSpan t)
+        {
+            return string.Format("{0:00}:{1:00}.{2}", (int)t.TotalMinutes, t.Seconds, t.Milliseconds / 100);
+        }
+
+        // Panel con el cronómetro de cada bot, en la esquina superior izquierda del tablero.
+        private void DibujarTemporizadores(Graphics g)
+        {
+            if (bots.Count == 0)
+            {
+                return;
+            }
+
+            Rectangle vista = Vista();
+            const int ancho = 270;
+            const int alto = 28;
+            int x = vista.Left + 8;
+            int y = vista.Top + 8;
+
+            using (Font fuente = new Font("Consolas", 11f, FontStyle.Bold))
+            using (SolidBrush fondo = new SolidBrush(Color.FromArgb(220, 15, 23, 42)))
+            {
+                foreach (Bot bot in bots)
+                {
+                    Stopwatch cronometro;
+                    TimeSpan tiempo = cronometros.TryGetValue(bot, out cronometro) ? cronometro.Elapsed : TimeSpan.Zero;
+                    bool enMeta = botsEnMeta.Contains(bot);
+
+                    string texto = bot.Nombre + "  " + FormatoTiempo(tiempo) + (enMeta ? "  ¡META!" : "");
+
+                    g.FillRectangle(fondo, x, y, ancho, alto);
+                    using (SolidBrush brocha = new SolidBrush(bot.Color))
+                    {
+                        g.DrawString(texto, fuente, brocha, x + 8, y + 5);
+                    }
+
+                    y += alto + 4;
+                }
+            }
         }
 
         private void DibujarMinimapa(Graphics g)
         {
             // Minimapa amplio tipo HUD superpuesto en la esquina superior derecha
-            const int miniTamano = 220;
+            const int miniTamano = 250;
             const int margen = 20;
 
             int miniX = ClientSize.Width - miniTamano - margen;
@@ -530,7 +629,7 @@ namespace Laberinto
             using (Font fuenteMini = new Font("Segoe UI", 7.5f, FontStyle.Bold))
             using (SolidBrush brochaTexto = new SolidBrush(Color.FromArgb(148, 163, 184)))
             {
-                g.DrawString("MINIMAPA", fuenteMini, brochaTexto, miniX + 4, miniY + 3);
+                g.DrawString("MINI-MAPA", fuenteMini, brochaTexto, miniX + 4, miniY + 3);
             }
         }
 
