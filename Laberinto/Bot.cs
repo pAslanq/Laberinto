@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Threading;
 
 namespace Laberinto
 {
@@ -61,6 +62,7 @@ namespace Laberinto
             indice++;
             Posicion = Ruta[indice];
             Recorrido.Add(Posicion);
+            Thread.Sleep(100);
         }
 
         public bool HaLlegado(Mapa mapa)
