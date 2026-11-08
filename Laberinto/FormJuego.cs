@@ -183,8 +183,9 @@ namespace Laberinto
             switch (ModoActual)
             {
                 case ModoJuego.BotVsBot:
-                    bots.Add(new Bot("Bot DFS", Rojo, new DFS(), mapa));
+                    bots.Add(new Bot("Bot Dijkstra", Cian, new Dijkstra(), mapa));
                     bots.Add(new Bot("Bot A*", Amarillo, new AStar(), mapa));
+                    bots.Add(new Bot("Bot DFS", Rojo, new DFS(), mapa));
                     break;
 
                 case ModoJuego.BotVsJugador:

@@ -21,8 +21,8 @@ namespace Laberinto
     public enum Dificultad
     {
         Facil = 50,
-        Medio = 60,
-        Dificil = 70
+        Medio = 65,
+        Dificil = 80
     }
 
     public partial class Form1 : Form
